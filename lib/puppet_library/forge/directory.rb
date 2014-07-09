@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'json'
+require 'redcarpet'
 require 'puppet_library/forge/abstract'
 require 'puppet_library/archive/archive_reader'
 require 'puppet_library/util/config_api'
@@ -70,15 +71,29 @@ module PuppetLibrary::Forge
         end
 
         def get_metadata(author, module_name)
+            print "LLAMANDO A get_metadata(#{author}, #{module_name})\n"
             archives = Dir["#{@module_dir.path}/**/#{author}-#{module_name}-*.tar.gz"]
             archives.map {|path| read_metadata(path) }.compact
         end
 
         private
         def read_metadata(archive_path)
+            print "LLamando a read_metadata(#{archive_path})\n"
             archive = PuppetLibrary::Archive::ArchiveReader.new(archive_path)
             metadata_file = archive.read_entry %r[[^/]+/metadata\.json$]
-            JSON.parse(metadata_file)
+           
+            
+            #HERE IS WHERE I HAVE TO DO MY MAGIC
+            markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML, extensions = {})
+            
+            #getting my path
+            readmeText = archive.read_entry %r[/README\.(md|markdown)]
+            readmeHTML = markdown.render(readmeText)
+            parsedJSON = JSON.parse(metadata_file)
+            
+            parsedJSON["documentation"] = readmeHTML
+            parsedJSON
+            
         rescue => error
             warn "Error reading from module archive #{archive_path}: #{error}"
             return nil
