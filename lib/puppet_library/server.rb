@@ -132,7 +132,6 @@ module PuppetLibrary
             module_name = params[:module]
 
             begin
-                #THIS IS THE LINE OF CODE I AM LOOKING FOR!
                 metadata = @forge.get_module_metadata(author, module_name)
                 haml :module, { :locals => { "metadata" => metadata } }
             rescue Forge::ModuleNotFound
