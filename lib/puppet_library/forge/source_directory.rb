@@ -72,14 +72,21 @@ module PuppetLibrary::Forge
 
     private
     def read_metadata(directory_path)
-      metadata_file = File.open(File.join(directory_path, "metadata.json"), "r").read
+      metadata_file_path = File.join(directory_path, "metadata.json")
+      modulefile_path = File.join(directory_path, "Modulefile")
+
+      if File.exist?(metadata_file_path)
+        metadata_file = File.open(metadata_file_path, "r").read
+        parsedJSON = JSON.parse(metadata_file)
+      else
+        parsedJSON = PuppetLibrary::PuppetModule::Modulefile.read(modulefile_path).to_metadata
+      end
 
       markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML, extensions = {})
-      Dir.chdir(directory_path)
+      Dir.chdir("#{directory_path}")
       readmePath = Dir["README.{md,markdown}"].first
       readmeText = File.open("#{directory_path}/#{readmePath}").read
       readmeHTML = markdown.render(readmeText)
-      parsedJSON = JSON.parse(metadata_file)
 
       parsedJSON["documentation"] = readmeHTML
       parsedJSON
